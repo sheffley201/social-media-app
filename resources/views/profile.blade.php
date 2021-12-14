@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Home Page') }}
+            {{ __('My Profile') }}
         </h2>
     </x-slot>
 
@@ -9,8 +9,12 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 bg-white border-b border-gray-200">
+                    <div class='flex items-center mb-5 p-3 rounded-lg bg-gray-100'>
+                        <img src='https://www.winhelponline.com/blog/wp-content/uploads/2017/12/user.png'>
+                        <h2 class='text-5xl h-min mx-5'>{{ Auth::user()->name }}</h2>
+                    </div>
                     <h3 class='text-lg my-2'>New Post</h3>
-                    <form method='post' action='{{ route('create-post') }}'>
+                    <form method='post' action='{{ route('create-post-profile') }}'>
                         <div class="flex items-center justify-between">
                             @csrf
                             <input type='hidden' name='user_id' value='{{ Auth::user()->id }}'>
@@ -21,21 +25,18 @@
                     @foreach ($posts as $post)
                         <x-post>
                             <x-slot name='user'>
-                                {{ $post->name }}
+                                {{ Auth::user()->name }}
                             </x-slot>
                             <x-slot name='body'>
                                 {{ $post->body }}
                             </x-slot>
-                            @if ($post->user_id == Auth::user()->id) {
-                                <x-slot name='delete'>
-                                    <form method='post' action='{{ route('delete-post') }}'>
-                                        @csrf
-                                        <input type='hidden' name='post_id' value='{{ $post->id }}' />
-                                        <x-button>Delete</x-button>
-                                    </form>
-                                </x-slot>
-                            }
-                            @endif
+                            <x-slot name='delete'>
+                                <form method='post' action='{{ route('delete-post-profile') }}'>
+                                    @csrf
+                                    <input type='hidden' name='post_id' value='{{ $post->id }}' />
+                                    <x-button>Delete</x-button>
+                                </form>
+                            </x-slot>
                         </x-post>
                     @endforeach
                 </div>
