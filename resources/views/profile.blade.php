@@ -56,9 +56,25 @@
                                 </form>
                             </x-slot>
                         </x-post>
-                        <form>
-                            <x-comment-input name='comment' placeholder='Add a comment...'></x-comment-input>
-                            <x-button class='text-lg'>Comment</x-button>
+                        @foreach ($comments as $comment)
+                            @if ($comment->post_id == $post->id)
+                                <x-comment>
+                                    <x-slot name='user'>
+                                        {{ $comment->name }}
+                                    </x-slot>
+                                    <x-slot name='body'>
+                                        {{ $comment->body }}
+                                    </x-slot>
+                                </x-comment>
+                            @endif
+                        @endforeach
+                        <form method='post' action='{{ route('add-comment-profile') }}'>
+                            @csrf
+                            <div class='flex items-center'>
+                                <input type='hidden' name='post_id' value='{{ $post->id }}' />
+                                <x-comment-input name='body' placeholder='Add a comment...'></x-comment-input>
+                                <x-button class='text-md mx-3'>Comment</x-button>
+                            </div>
                         </form>
                     @endforeach
                 </div>

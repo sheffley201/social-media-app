@@ -132,6 +132,14 @@ Route::group(['middleware' => ['auth']], function () {
             ORDER BY p.created_at DESC
         ");
 
+        $comments = DB::select('
+            select c.id, c.body, c.post_id, c.user_id, u.name
+            from comments c
+            join users u
+            on c.user_id = u.id
+            order by c.created_at desc
+        ');
+
         $userLikes = DB::select("
             select post_id
             from likes
@@ -145,7 +153,8 @@ Route::group(['middleware' => ['auth']], function () {
         };
 
         return view('profile', ['posts' => $posts])
-            ->with('likeArr', $likeArr);
+            ->with('likeArr', $likeArr)
+            ->with('comments', $comments);
     })->name('profile');
 
     Route::post('/delete-post-profile', function(Request $request) {
@@ -186,6 +195,21 @@ Route::group(['middleware' => ['auth']], function () {
 
         return redirect('/profile');
     })->name('unlike-profile');
+
+    Route::post('/add-comment-profile', function(Request $request) {
+        $validatedData = $request->validate([
+            'body' => 'required|max:750',
+            'post_id' => 'required',
+        ]);
+
+        $comment = new Comment;
+        $comment->user_id = Auth::user()->id;
+        $comment->body = $request->body;
+        $comment->post_id = $request->post_id;
+        $comment->save();
+
+        return redirect('/dashboard');
+    })->name('add-comment-profile');
 });
 
 require __DIR__.'/auth.php';
