@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 //Model for posts
 use App\Models\Post;
+//Model for likes
+use App\Models\Like;
 // Added to query database
 use Illuminate\Support\Facades\DB;
 // Authentication
@@ -27,13 +29,30 @@ Route::get('/', function () {
 Route::group(['middleware' => ['auth']], function () {
     Route::get('/dashboard', function () {
         $posts = DB::select('
-            SELECT p.id, p.body, p.user_id, u.name
+            SELECT p.id, p.body, p.user_id, u.name, COUNT(l.id) likes
             FROM posts p
             JOIN users u
             ON p.user_id = u.id
+            LEFT JOIN likes l
+            ON p.id = l.post_id
+            GROUP BY p.id, p.body, p.user_id, u.name
             ORDER BY p.created_at DESC
         ');
-        return view('dashboard', ['posts' => $posts]);
+
+        $userLikes = DB::select("
+            select post_id
+            from likes
+            where user_id = ".Auth::user()->id."
+        ");
+
+        $likeArr = [];
+
+        foreach ($userLikes as $userLike) {
+            array_push($likeArr, $userLike->post_id);
+        };
+
+        return view('dashboard', ['posts' => $posts])
+            ->with('likeArr', $likeArr);
     })->name('dashboard');
 
     Route::post('/create-post', function(Request $request) {
@@ -50,6 +69,25 @@ Route::group(['middleware' => ['auth']], function () {
         return redirect('/dashboard');
     })->name('create-post');
 
+    Route::post('/like-post', function(Request $request) {
+        $like = new Like;
+        $like->user_id = Auth::id();
+        $like->post_id = $request->post_id;
+        $like->save();
+
+        return redirect('/dashboard');
+    })->name('like-post');
+
+    Route::post('/unlike', function() {
+        $like = Like::where('user_id', Auth::id())
+            ->where('post_id', request()->post_id)
+            ->first();
+
+        $like->delete();
+
+        return redirect('/dashboard');
+    })->name('unlike');
+
     Route::post('/delete-post', function(Request $request) {
         $postID = $request->post_id;
         Post::where('id', $postID)->firstorfail()->delete();
@@ -59,7 +97,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/profile', function() {
         $user_id = Auth::user()->id;
         $posts = DB::select("
-            SELECT body, id
+            SELECT body, id, likes
             FROM posts
             WHERE user_id = '{$user_id}'
             ORDER BY created_at DESC

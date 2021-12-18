@@ -6,7 +6,9 @@
             <p>{{ $body }}</p>
         </div>
     </div>
-    <div>
+    <div class='flex justify-between items-center'>
+        <p class='mx-3'>Likes: {{ $likes ?? ""}}</p>
+        {{ $likeOrUnlike}}
         {{ $delete ?? ''}}
     </div>
 </div>
