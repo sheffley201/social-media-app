@@ -97,13 +97,29 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/profile', function() {
         $user_id = Auth::user()->id;
         $posts = DB::select("
-            SELECT body, id, likes
-            FROM posts
-            WHERE user_id = '{$user_id}'
-            ORDER BY created_at DESC
+            SELECT p.body, p.id, COUNT(l.id) likes
+            FROM posts p
+            LEFT JOIN likes l
+            ON p.id = l.post_id
+            WHERE p.user_id = '{$user_id}'
+            GROUP BY p.id, p.body
+            ORDER BY p.created_at DESC
         ");
 
-        return view('profile', ['posts' => $posts]);
+        $userLikes = DB::select("
+            select post_id
+            from likes
+            where user_id = ".Auth::user()->id."
+        ");
+
+        $likeArr = [];
+
+        foreach ($userLikes as $userLike) {
+            array_push($likeArr, $userLike->post_id);
+        };
+
+        return view('profile', ['posts' => $posts])
+            ->with('likeArr', $likeArr);
     })->name('profile');
 
     Route::post('/delete-post-profile', function(Request $request) {

@@ -30,6 +30,24 @@
                             <x-slot name='body'>
                                 {{ $post->body }}
                             </x-slot>
+                            <x-slot name='likes'>
+                                {{ $post->likes }}
+                            </x-slot>
+                            <x-slot name='likeOrUnlike'>
+                                @if (in_array($post->id, $likeArr))
+                                    <form method='post' action='{{ route('unlike') }}'>
+                                        @csrf
+                                        <input type='hidden' name='post_id' value='{{ $post->id }}'>
+                                        <x-button class='text-red-500 mx-3'>Unlike</x-button>
+                                    </form>
+                                @else
+                                <form method='post' action='{{ route('like-post') }}'>
+                                    @csrf
+                                    <input type='hidden' name='post_id' value='{{ $post->id }}' />
+                                    <x-button class='mx-3'>Like</x-button>
+                                </form>
+                                @endif
+                            </x-slot>
                             <x-slot name='delete'>
                                 <form method='post' action='{{ route('delete-post-profile') }}'>
                                     @csrf
