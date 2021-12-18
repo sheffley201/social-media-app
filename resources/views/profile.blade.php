@@ -35,13 +35,13 @@
                             </x-slot>
                             <x-slot name='likeOrUnlike'>
                                 @if (in_array($post->id, $likeArr))
-                                    <form method='post' action='{{ route('unlike') }}'>
+                                    <form method='post' action='{{ route('unlike-profile') }}'>
                                         @csrf
                                         <input type='hidden' name='post_id' value='{{ $post->id }}'>
                                         <x-button class='text-red-500 mx-3'>Unlike</x-button>
                                     </form>
                                 @else
-                                <form method='post' action='{{ route('like-post') }}'>
+                                <form method='post' action='{{ route('like-post-profile') }}'>
                                     @csrf
                                     <input type='hidden' name='post_id' value='{{ $post->id }}' />
                                     <x-button class='mx-3'>Like</x-button>
@@ -56,6 +56,10 @@
                                 </form>
                             </x-slot>
                         </x-post>
+                        <form>
+                            <x-comment-input name='comment' placeholder='Add a comment...'></x-comment-input>
+                            <x-button class='text-lg'>Comment</x-button>
+                        </form>
                     @endforeach
                 </div>
             </div>

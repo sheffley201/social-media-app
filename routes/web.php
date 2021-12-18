@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\Post;
 //Model for likes
 use App\Models\Like;
+//Model for comments
+use App\Models\Comment;
 // Added to query database
 use Illuminate\Support\Facades\DB;
 // Authentication
@@ -39,6 +41,14 @@ Route::group(['middleware' => ['auth']], function () {
             ORDER BY p.created_at DESC
         ');
 
+        $comments = DB::select('
+            select c.id, c.body, c.post_id, c.user_id, u.name
+            from comments c
+            join users u
+            on c.user_id = u.id
+            order by c.created_at desc
+        ');
+
         $userLikes = DB::select("
             select post_id
             from likes
@@ -52,7 +62,8 @@ Route::group(['middleware' => ['auth']], function () {
         };
 
         return view('dashboard', ['posts' => $posts])
-            ->with('likeArr', $likeArr);
+            ->with('likeArr', $likeArr)
+            ->with('comments', $comments);
     })->name('dashboard');
 
     Route::post('/create-post', function(Request $request) {
@@ -68,6 +79,12 @@ Route::group(['middleware' => ['auth']], function () {
 
         return redirect('/dashboard');
     })->name('create-post');
+
+    Route::post('/delete-post', function(Request $request) {
+        $postID = $request->post_id;
+        Post::where('id', $postID)->firstorfail()->delete();
+        return redirect('/dashboard');
+    })->name('delete-post');
 
     Route::post('/like-post', function(Request $request) {
         $like = new Like;
@@ -88,11 +105,20 @@ Route::group(['middleware' => ['auth']], function () {
         return redirect('/dashboard');
     })->name('unlike');
 
-    Route::post('/delete-post', function(Request $request) {
-        $postID = $request->post_id;
-        Post::where('id', $postID)->firstorfail()->delete();
+    Route::post('/add-comment', function(Request $request) {
+        $validatedData = $request->validate([
+            'body' => 'required|max:750',
+            'post_id' => 'required',
+        ]);
+
+        $comment = new Comment;
+        $comment->user_id = Auth::user()->id;
+        $comment->body = $request->body;
+        $comment->post_id = $request->post_id;
+        $comment->save();
+
         return redirect('/dashboard');
-    })->name('delete-post');
+    })->name('add-comment');
 
     Route::get('/profile', function() {
         $user_id = Auth::user()->id;
@@ -141,6 +167,25 @@ Route::group(['middleware' => ['auth']], function () {
 
         return redirect('/profile');
     })->name('create-post-profile');
+
+    Route::post('/like-post-profile', function(Request $request) {
+        $like = new Like;
+        $like->user_id = Auth::id();
+        $like->post_id = $request->post_id;
+        $like->save();
+
+        return redirect('/profile');
+    })->name('like-post-profile');
+
+    Route::post('/unlike-profile', function() {
+        $like = Like::where('user_id', Auth::id())
+            ->where('post_id', request()->post_id)
+            ->first();
+
+        $like->delete();
+
+        return redirect('/profile');
+    })->name('unlike-profile');
 });
 
 require __DIR__.'/auth.php';
